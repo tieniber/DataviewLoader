@@ -27,9 +27,10 @@ define([
   "dojo/dom-class",
   "dojo/_base/lang",
   "dojo/_base/event",
+  "dojo/query",
 
   "dojo/text!DataviewLoader/widget/template/DataviewLoader.html"
-], function (declare, _WidgetBase, _TemplatedMixin, dom, dojoDom, dojoStyle, dojoClass, dojoLang, dojoEvent, widgetTemplate) {
+], function (declare, _WidgetBase, _TemplatedMixin, dom, dojoDom, dojoStyle, dojoClass, dojoLang, dojoEvent, dojoQuery, widgetTemplate) {
     "use strict";
 
     // Declare widget's prototype.
@@ -39,7 +40,7 @@ define([
 
         // DOM elements
         divContent: null,
-        divLoader: null,        
+        divLoader: null,
 
         // Internal variables. Non-primitives created in the prototype are shared between all widget instances.
         _handles: null,
@@ -58,7 +59,7 @@ define([
         // dijit._WidgetBase.postCreate is called after constructing the widget. Implement to do extra setup work.
         postCreate: function () {
             logger.debug(this.id + ".postCreate");
-            
+
             this._updateRendering();
             this._setupEvents();
         },
@@ -69,7 +70,7 @@ define([
                 console.log(this.id + ".update on new object");
                 this._loadingStarted = false;
                 this._pageInitiated = false;
-                
+
                 this._contextObj = obj;
                 this._resetSubscriptions();
                 this._updateRendering(callback); // We're passing the callback to updateRendering to be called after DOM-manipulation
@@ -125,7 +126,7 @@ define([
             if (this._contextObj) {
                 dojoStyle.set(this.divContent, "display", "none");
                 dojoStyle.set(this.divLoader, "display", "block");
-                
+
                 if(this.fadeContent){
                     dojoClass.add(this.divContent, "loaderfade");
                 }
@@ -141,7 +142,7 @@ define([
 
         _loadAndShowcontent: function () {
             logger.debug(this.id + "._loadAndShowcontent");
-            if(this._loadingStarted == false){
+            if(this._loadingStarted === false){
                 this._loadingStarted = true;
                 if (this._contextObj && this.loadingMF) {
                     this._execMf(this.loadingMF, this._contextObj.getGuid(), this._processMicroflowCallback, this._processMicroflowFailure);
@@ -152,7 +153,7 @@ define([
         },
 
         _processMicroflowCallback: function (objs) {
-            logger.debug(this.id + '._processMicroflowCallback');
+            logger.debug(this.id + "._processMicroflowCallback");
             if (this.active) {
                 if(this.asyncCall)
                     this._setPage(this._contextObj);
@@ -174,7 +175,7 @@ define([
         },
 
         _setPage: function (pageObj) {
-            logger.debug(this.id + '._setPage');
+            logger.debug(this.id + "._setPage");
 
             if(this._pageInitiated) {
                 if (this._loadingStarted) {
@@ -213,13 +214,22 @@ define([
 
         _showPage: function () {
             console.log(this.id + "._showPage on form");
-            
+
+			//ensure page has the latest context
+			var dataViewNodes = dojoQuery(".mx-dataview", this.divContent);
+			if(dataViewNodes.length > 0) {
+				var dv = dijit.registry.byNode(dataViewNodes[0]);
+				if(dv) {
+					dv.applyContext(this.mxcontext);
+				}
+			}
+
             dojoStyle.set(this.divContent, "display", "block");
             dojoStyle.set(this.divLoader, "display", "none");
-            
+
             this._loadingStarted = false;
         },
-        
+
         // Reset subscriptions.
         _resetSubscriptions: function () {
             logger.debug(this.id + "._resetSubscriptions");
@@ -232,7 +242,7 @@ define([
                 this.subscribe({
                     guid: this._contextObj.getGuid(),
                     callback: dojoLang.hitch(this, function (guid) {
-                        if(this._loadingStarted == false){
+                        if(this._loadingStarted === false){
                             console.log(this.id + ".Refresh triggered.");
                             this._updateRendering();
                         } else {
