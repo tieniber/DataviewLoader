@@ -190,7 +190,7 @@ define([
                 if (pageObj) {
                     var pageContext = new mendix.lib.MxContext();
                     pageContext.setTrackObject(pageObj);
-                    this._form = mx.ui.openForm(this.pageContent, {
+                    mx.ui.openForm(this.pageContent, {
                                     context: pageContext,
                                     location: "content",
                                     domNode: this.divContent,
@@ -200,7 +200,7 @@ define([
                                     }
                                 });
                 } else {
-                    this._form = mx.ui.openForm(this.pageContent, {
+                    mx.ui.openForm(this.pageContent, {
                                     location: "content",
                                     domNode: this.divContent,
                                     callback: dojoLang.hitch(this, this._showPage),
@@ -212,19 +212,14 @@ define([
             }
         },
 
-        _showPage: function () {
+        _showPage: function (form) {
             console.log(this.id + "._showPage on form");
+            this._form = form;
 
-			//ensure page has the latest context
-			var dataViewNodes = dojoQuery(".mx-dataview", this.divContent);
-			if(dataViewNodes.length > 0) {
-				var dv = dijit.registry.byNode(dataViewNodes[0]);
-				if(dv) {
-					dv.applyContext(this.mxcontext);
-				}
-			}
+            //ensure page has the latest context
+            form.applyContext(this.mxcontext);
 
-            dojoStyle.set(this.divContent, "display", "block");
+			dojoStyle.set(this.divContent, "display", "block");
             dojoStyle.set(this.divLoader, "display", "none");
 
             this._loadingStarted = false;
